@@ -1,0 +1,379 @@
+---
+title: "Endfield"
+output: html_document
+date: "2026-02-16"
+---
+Weapon
+```{r}
+rateup = 0
+star_level = c("4and5-star", "6-star", "6-star(rate-up)")
+
+gacha_weapon = function(pity){
+    pulls = 0
+    SixStarPity = pity
+    tokens = 0
+    while (rateup < 1){
+      pulls = pulls + 1
+      SixStarPity = SixStarPity + 1
+      probw = c(0.96, 0.03, 0.01)
+      prob1 = c(0.96, 0.03, 0.01)
+      if (SixStarPity >= 4){
+        prob1 = c(0, 0.75, 0.25)
+        SixStarPity = 0
+      }
+      if (pulls == 8){
+        prob1 = c(0, 0, 1)
+      }
+      x_list = sample(star_level, size = 9, probw , replace = TRUE)
+      x_list = c(x_list, sample(star_level, size = 1, prob1 , replace = TRUE))
+      bool1 = "6-star(rate-up)" %in% x_list 
+      if (bool1 == TRUE){
+        SixStarPity = 0
+        rateup = 1
+      }
+}
+return (pulls)
+}
+
+sim_weapons = function(attempts){
+  n = 0
+  total_pulls = c()
+  while (n < attempts){
+    n = n + 1
+    gachaonce = gacha_weapon(0)
+    total_pulls = c(total_pulls, gachaonce)
+
+  }
+  return (mean(total_pulls))
+}
+
+```
+
+
+
+
+Regular Gacha
+```{r}
+
+free_gacha = function(sixpity, fivepity){
+    rateup = 0
+    star_level = c("4-star", "5-star", "6-star", "6-star(rate-up)")
+    prob = c(0.912, 0.08, 0.004, 0.004)
+    pulls = 0
+    SixStarPity = sixpity
+    FiveStarPity = fivepity
+    tokens = 0
+    while (rateup < 1){
+      pulls = pulls + 1
+      SixStarPity = SixStarPity + 1
+      FiveStarPity = FiveStarPity + 1
+      prob = c(0.912, 0.08, 0.004, 0.004)
+      if (SixStarPity >= 65){
+        prob[1] = prob[1]*(1-(0.05*(SixStarPity-64)))
+        prob[2] = prob[2]*(1-(0.05*(SixStarPity-64)))
+        prob[3] = prob[3] + (0.025*(SixStarPity-64))
+        prob[4] = prob[4] + (0.025*(SixStarPity-64))
+      }
+      if (SixStarPity == 80){
+        prob = c(0, 0, 0.5, 0.5)
+      }
+      if (FiveStarPity >= 10){
+        prob[2] = prob[2] + prob[1]
+        prob[1] = 0
+      }
+      x = sample(star_level, size = 1, prob , replace = TRUE)
+      if (x == "6-star(rate-up)"){
+        SixStarPity = 0
+        FiveStarPity = 0
+        rateup = 1
+        tokens = tokens + 2000
+      }
+      else if (x == "6-star"){
+        SixStarPity = 0
+        FiveStarPity = 0
+        tokens = tokens + 2000
+      }
+        else if (x == "5-star"){
+        FiveStarPity = 0
+        tokens = tokens + 200
+      }
+      else{
+        tokens = tokens + 20
+      }
+      if (pulls == 10){
+        return (c(SixStarPity, FiveStarPity, pulls, rateup, tokens))
+      }
+}
+return (c(SixStarPity, FiveStarPity, pulls, rateup, tokens))
+}
+
+gacha_no_pity = function(pity){
+  star_level = c("4-star", "5-star", "6-star", "6-star(rate-up)")
+    prob = c(0.912, 0.08, 0.004, 0.004)
+    pulls = 0
+    SixStarPity = pity
+    FiveStarPity = 0
+    tokens = 0
+    while (rateup < 1){
+      pulls = pulls + 1
+      SixStarPity = SixStarPity + 1
+      FiveStarPity = FiveStarPity + 1
+      prob = c(0.912, 0.08, 0.004, 0.004)
+      if (SixStarPity >= 65){
+        prob[1] = prob[1]*(1-(0.05*(SixStarPity-64)))
+        prob[2] = prob[2]*(1-(0.05*(SixStarPity-64)))
+        prob[3] = prob[3] + (0.025*(SixStarPity-64))
+        prob[4] = prob[4] + (0.025*(SixStarPity-64))
+      }
+      if (SixStarPity == 80){
+        prob = c(0, 0, 0.5, 0.5)
+      }
+      if (FiveStarPity >= 10){
+        prob[2] = prob[2] + prob[1]
+        prob[1] = 0
+      }
+      if (pulls == 30){
+        free = free_gacha(SixStarPity, FiveStarPity)
+        tokens = tokens + free[5]
+        rateup = rateup + free[4]
+        SixStarPity = free[1]
+        FiveStarPity = free[2]
+      }
+      x = sample(star_level, size = 1, prob , replace = TRUE)
+      if (x == "6-star(rate-up)"){
+        SixStarPity = 0
+        FiveStarPity = 0
+        rateup = 1
+        tokens = tokens + 2000
+      }
+      else if (x == "6-star"){
+        SixStarPity = 0
+        FiveStarPity = 0
+        tokens = tokens + 2000
+      }
+        else if (x == "5-star"){
+        FiveStarPity = 0
+        tokens = tokens + 200
+      }
+      else{
+        tokens = tokens + 20
+      }
+}
+return (c(tokens, pulls))
+}
+
+sim_no_pity = function(attempts){
+  n = 0
+  total_pulls = c()
+  total_tokens = c()
+  while (n < attempts){
+    n = n + 1
+    gachaonce = gacha_no_pity(0)
+    total_pulls = c(total_pulls, gachaonce[2])
+    total_tokens = c(total_tokens, gachaonce[1])
+  }
+  return (c(mean(total_pulls), mean(total_tokens)))
+}
+  
+list_pulls = function(attempts){
+  n = 0
+  total_pulls = c()
+  total_tokens = c()
+  while (n < attempts){
+    n = n + 1
+    gachaonce = gacha(0)
+    total_pulls = c(total_pulls, gachaonce[2])
+    total_tokens = c(total_tokens, gachaonce[1])
+  }
+  return (total_pulls)
+}
+```
+
+
+
+
+
+With 120 Pity
+
+
+```{r}
+
+free_gacha = function(sixpity, fivepity){
+  rateup = 0
+  star_level = c("4-star", "5-star", "6-star", "6-star(rate-up)")
+    prob = c(0.912, 0.08, 0.004, 0.004)
+    pulls = 0
+    SixStarPity = sixpity
+    FiveStarPity = fivepity
+    tokens = 0
+    while (rateup < 1){
+      pulls = pulls + 1
+      SixStarPity = SixStarPity + 1
+      FiveStarPity = FiveStarPity + 1
+      prob = c(0.912, 0.08, 0.004, 0.004)
+      if (SixStarPity >= 65){
+        prob[1] = prob[1]*(1-(0.05*(SixStarPity-64)))
+        prob[2] = prob[2]*(1-(0.05*(SixStarPity-64)))
+        prob[3] = prob[3] + (0.025*(SixStarPity-64))
+        prob[4] = prob[4] + (0.025*(SixStarPity-64))
+      }
+      if (SixStarPity == 80){
+        prob = c(0, 0, 0.5, 0.5)
+      }
+      if (FiveStarPity >= 10){
+        prob[2] = prob[2] + prob[1]
+        prob[1] = 0
+      }
+      x = sample(star_level, size = 1, prob , replace = TRUE)
+      if (x == "6-star(rate-up)"){
+        SixStarPity = 0
+        rateup = 1
+        tokens = tokens + 2000
+      }
+      else if (x == "6-star"){
+        SixStarPity = 0
+        tokens = tokens + 2000
+      }
+        else if (x == "5-star"){
+        FiveStarPity = 0
+        tokens = tokens + 200
+      }
+      else{
+        tokens = tokens + 20
+      }
+      if (pulls == 10){
+        return (c(SixStarPity, FiveStarPity, pulls, rateup, tokens))
+      }
+}
+return (c(SixStarPity, FiveStarPity, pulls, rateup, tokens))
+}
+
+gacha = function(pity){
+    prob = c(0.912, 0.08, 0.004, 0.004)
+    star_level = c("4-star", "5-star", "6-star", "6-star(rate-up)")
+    pulls = 0
+    SixStarPity = pity
+    FiveStarPity = 0
+    tokens = 0
+    while (rateup < 1){
+      pulls = pulls + 1
+      SixStarPity = SixStarPity + 1
+      FiveStarPity = FiveStarPity + 1
+      prob = c(0.912, 0.08, 0.004, 0.004)
+      if (SixStarPity >= 65){
+        prob[1] = prob[1]*(1-(0.05*(SixStarPity-64)))
+        prob[2] = prob[2]*(1-(0.05*(SixStarPity-64)))
+        prob[3] = prob[3] + (0.025*(SixStarPity-64))
+        prob[4] = prob[4] + (0.025*(SixStarPity-64))
+      }
+      if (SixStarPity == 80){
+        prob = c(0, 0, 0.5, 0.5)
+      }
+      if (FiveStarPity >= 10){
+        prob[2] = prob[2] + prob[1]
+        prob[1] = 0
+      }
+      if (pulls == 120){
+        prob = c(0, 0, 0, 1)
+      }
+      if (pulls == 30){
+        free = free_gacha(SixStarPity, FiveStarPity)
+        tokens = tokens + free[5]
+        rateup = rateup + free[4]
+        SixStarPity = free[1]
+        FiveStarPity = free[2]
+      }
+      x = sample(star_level, size = 1, prob , replace = TRUE)
+      if (x == "6-star(rate-up)"){
+        SixStarPity = 0
+        FiveStarPity = 0
+        rateup = 1
+        tokens = tokens + 2000
+      }
+      else if (x == "6-star"){
+        SixStarPity = 0
+        FiveStarPity = 0
+        tokens = tokens + 2000
+      }
+        else if (x == "5-star"){
+        FiveStarPity = 0
+        tokens = tokens + 200
+      }
+      else{
+        tokens = tokens + 20
+      }
+}
+return (c(tokens, pulls))
+}
+
+sim = function(attempts){
+  n = 0
+  total_pulls = c()
+  total_tokens = c()
+  while (n < attempts){
+    n = n + 1
+    gachaonce = gacha(0)
+    total_pulls = c(total_pulls, gachaonce[2])
+    total_tokens = c(total_tokens, gachaonce[1])
+  }
+  return (c(mean(total_pulls), mean(total_tokens)))
+}
+  
+list_pulls = function(attempts){
+  n = 0
+  total_pulls = c()
+  total_tokens = c()
+  while (n < attempts){
+    n = n + 1
+    gachaonce = gacha(0)
+    total_pulls = c(total_pulls, gachaonce[2])
+    total_tokens = c(total_tokens, gachaonce[1])
+  }
+  return (total_pulls)
+}
+```
+You can also embed plots, for example:
+
+Conclusion & Plots
+
+
+
+```{r}
+library(ggplot2)
+##With 120 Pity
+weapon_sim = sim_weapons(10000)
+print("Average Number of Arsenal Tokens for a 6 Star Rate up Weapon is:")
+weapon_sim*1980
+gacha_sim = sim(50000)
+print("Average Number of Pulls for 6 Star Rate Up Character is:")
+gacha_sim[1]
+print("Average Arsenal Tokens Obtained is:")
+gacha_sim[2]
+##Roughly 75 pulls per 6 star on average. Probably will get enough arsenal tokens to get signature weapon, since on average you need around 3k more. Considering the free pulls from rate up and standard banner and weeklies, you can probably get it by the end of the 3 cycles. Compared to Wuthering Waves, Wuwa is 1.8 percent including pity. If we include the 50/50 and guaranteed after that it is around 83.3 pulls. With Weapon which is same odds but guaranteed, is around 138.8.
+
+##What About Without 120 Pity?
+gacha_sim_no_pity = sim_no_pity(10000)
+print("Average Number of Pulls for 6 Star Rate Up Character is(Without Pity):")
+gacha_sim_no_pity[1]
+print("Average Arsenal Tokens Obtained is:")
+gacha_sim_no_pity[2]
+
+##Roughly 25 more pulls needed on average, so by saving to 120 pulls, on average you are saving a quarter of the costs.
+
+data = list_pulls(10000)
+data_frame <- data.frame(data)
+ggplot(data_frame, aes(x = data)) + labs(title = "Simulation of 10000 Pulls for Rate up 6 Star in AKE", y = "Frequency", x = "Pulls Needed for Rate Up 6 Star") + geom_histogram(bins = 120, colour="black", fill="white") + scale_x_continuous(breaks = round(seq(0, 120, by = 10),1)) + scale_y_continuous(breaks = round(seq(0, 3500, by = 350),1)) 
+
+#Note, the jump at 30 pulls is due to the extra 10 pulls, which is also why pity seems to start early
+
+p <- ecdf(data)
+plot(p, xlab='Number of Pulls', ylab='Probability', main='Probability of getting Rate up')
+abline(h = 0.68, col = "red", lwd = 2)
+abline(v = 119, col = "red", lwd = 2)
+
+#Roughly 1 in 3 chances of reaching the 120 pity, so if you haven't gotten it by 120, its not that uncommon.
+
+#Conclusion: Save for 120 pulls. Also with the 120 pity, AKE takes less pulls that any other gacha game, very generous system, and keep in mind that we pretty much get the weapon for free.
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
